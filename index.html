@@ -12,7 +12,6 @@
     min-height: 100vh; 
     overflow-x: hidden; 
     background: #1a0a00;
-    /* ป้องกันกรอบสีเทาๆ เวลาแตะหน้าจอในมือถือ */
     -webkit-tap-highlight-color: transparent; 
   }
 
@@ -26,17 +25,13 @@
     content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.2); 
   }
 
-  /* SVG ลวดลาย (ห้ามบังการแตะหน้าจอเด็ดขาด) */
   #scene { position: fixed; inset: 0; z-index: -1; pointer-events: none !important; }
-  
-  /* กล่องหลัก ให้อยู่ชั้นบนสุด */
   #app { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
   /* GIFT */
   #gift-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; width: 100%; }
   .title-top { font-size: clamp(1.4rem,4vw,2rem); color: #ffe8b0; text-shadow: 0 2px 12px rgba(0,0,0,0.8); animation: floatY 3s ease-in-out infinite; text-align: center; padding: 0 1rem; pointer-events: none; }
   
-  /* ทำให้พื้นที่กดกล่องใหญ่ขึ้นและกดง่ายบนมือถือ */
   #gift-wrap { cursor: pointer; animation: pulse 1.8s ease-in-out infinite; user-select: none; padding: 20px; touch-action: manipulation; }
   #gift-wrap:hover { animation: wobble .5s ease-in-out infinite; }
   #gift-wrap.shake { animation: shake .5s ease-in-out; }
@@ -55,8 +50,7 @@
   .bow-right { right:0; transform:rotate(35deg); }
   .bow::after { content:''; position:absolute; top:4px; left:50%; transform:translateX(-50%); width:12px; height:12px; background:#ffb020; border-radius:50%; }
   
-  /* ตัวหนังสือคลิกได้ด้วยเผื่อจิ้มพลาด */
-  .click-hint { font-size:1.2rem; color:#ffe8b0; text-shadow:0 1px 6px rgba(0,0,0,.8); animation:blink 1.6s ease-in-out infinite; cursor: pointer; padding: 10px; }
+  .click-hint { font-size:1.2rem; color:#ffe8b0; text-shadow:0 1px 6px rgba(0,0,0,.8); animation:blink 1.6s ease-in-out infinite; cursor: pointer; padding: 10px; touch-action: manipulation;}
   .sparkle { position:fixed; pointer-events:none; z-index:99; border-radius:50%; animation:sparkleAnim 1s forwards; }
 
   /* REVEAL */
@@ -85,7 +79,7 @@
   /* LIGHTBOX */
   #lightbox {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.85); z-index: 9999; /* ให้ลอยเหนือทุกสิ่ง */
+    background: rgba(0,0,0,0.85); z-index: 9999; 
     display: none; justify-content: center; align-items: center;
     opacity: 0; transition: opacity 0.3s ease; cursor: pointer;
     touch-action: manipulation;
@@ -110,7 +104,8 @@
   #music-section.visible { opacity:1; transform:translateY(0); }
   .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.8); }
   
-  #yt-wrapper { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; } 
+  /* แก้ไขสำหรับ iOS: เอาไปแอบไว้นอกจอ และปรับให้มีขนาดจริง iOS จะได้ไม่บล็อก */
+  #yt-wrapper { position: absolute; top: -2000px; left: -2000px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none; } 
 
   #lyrics-container { width: 100%; height: 120px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   #lyrics-inner { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -306,23 +301,22 @@ function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
 }
 
-// OPEN GIFT
+// OPEN GIFT (แก้ไขการทำงานบน iOS)
 function openGift(){
   const w=document.getElementById('gift-wrap');
   if(w.classList.contains('shake')) return;
   
-  // สั่งให้กล่องสั่น "ทันที" เพื่อให้คนกดรู้ว่ากดติดแล้ว
+  // 1. สั่งเล่นเพลง "ทันที" ในจังหวะที่นิ้วแตะจอ ห้ามหน่วงเวลาเด็ดขาด (แก้บัค iOS)
+  try {
+    if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
+      ytPlayer.playVideo();
+    }
+  } catch(e) { console.error("YouTube Error:", e); }
+
+  // 2. ให้กล่องเริ่มสั่น
   w.classList.add('shake');
   
-  // แยกส่วนการเล่นเพลงออกจากการเคลื่อนไหวกล่อง (กันมือถือบล็อกแล้วค้าง)
-  setTimeout(() => {
-    try {
-      if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
-        ytPlayer.playVideo();
-      }
-    } catch(e) {}
-  }, 10);
-
+  // 3. ปล่อยให้แอนิเมชันที่เหลือทำงานต่อไป
   const r=w.getBoundingClientRect();
   setTimeout(()=>{
     spawnSparkles(r.left+r.width/2,r.top+r.height/2);
