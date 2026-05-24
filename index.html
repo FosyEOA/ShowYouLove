@@ -104,8 +104,16 @@
   #music-section.visible { opacity:1; transform:translateY(0); }
   .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.8); }
   
-  /* แก้ไขสำหรับ iOS: เอาไปแอบไว้นอกจอ และปรับให้มีขนาดจริง iOS จะได้ไม่บล็อก */
-  #yt-wrapper { position: absolute; top: -2000px; left: -2000px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none; } 
+  /* แก้ไขไม้ตายสำหรับ iOS: เอา YouTube มาไว้กลางจอ แต่โปร่งใส 1% และดันไปเลเยอร์ที่ -999 เพื่อหลอก Safari ว่าวิดีโอมีตัวตนอยู่ในจอจริงๆ */
+  #yt-wrapper { 
+    position: fixed; 
+    top: 50%; left: 50%; 
+    transform: translate(-50%, -50%);
+    width: 200px; height: 200px; 
+    opacity: 0.01; 
+    pointer-events: none; 
+    z-index: -999; 
+  } 
 
   #lyrics-container { width: 100%; height: 120px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   #lyrics-inner { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -301,22 +309,19 @@ function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
 }
 
-// OPEN GIFT (แก้ไขการทำงานบน iOS)
+// OPEN GIFT
 function openGift(){
   const w=document.getElementById('gift-wrap');
   if(w.classList.contains('shake')) return;
   
-  // 1. สั่งเล่นเพลง "ทันที" ในจังหวะที่นิ้วแตะจอ ห้ามหน่วงเวลาเด็ดขาด (แก้บัค iOS)
+  // ให้เล่นเพลงทันทีในจังหวะที่นิ้วแตะจอ ห้ามหน่วงเวลา!
   try {
     if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
       ytPlayer.playVideo();
     }
-  } catch(e) { console.error("YouTube Error:", e); }
+  } catch(e) { console.error(e); }
 
-  // 2. ให้กล่องเริ่มสั่น
   w.classList.add('shake');
-  
-  // 3. ปล่อยให้แอนิเมชันที่เหลือทำงานต่อไป
   const r=w.getBoundingClientRect();
   setTimeout(()=>{
     spawnSparkles(r.left+r.width/2,r.top+r.height/2);
