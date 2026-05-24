@@ -104,13 +104,13 @@
   #music-section.visible { opacity:1; transform:translateY(0); }
   .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.8); }
   
-  /* แก้ไขไม้ตายสำหรับ iOS: เอา YouTube มาไว้กลางจอ แต่โปร่งใส 1% และดันไปเลเยอร์ที่ -999 เพื่อหลอก Safari ว่าวิดีโอมีตัวตนอยู่ในจอจริงๆ */
+  /* ท่าไม้ตาย iOS: เอาเครื่องเล่นมาซ่อนไว้ในจอ แต่ทำให้โปร่งใสสุดๆ */
   #yt-wrapper { 
     position: fixed; 
     top: 50%; left: 50%; 
     transform: translate(-50%, -50%);
     width: 200px; height: 200px; 
-    opacity: 0.01; 
+    opacity: 0.001; /* โปร่งใสจนมองไม่เห็น แต่ถือว่าอยู่ในจอ */
     pointer-events: none; 
     z-index: -999; 
   } 
@@ -150,16 +150,18 @@
 </svg>
 
 <div id="app">
+  <div id="audio-unlocker" style="position: absolute; inset: 0; z-index: 9999; cursor: pointer;"></div>
+
   <div id="gift-screen">
     <p class="title-top">🌸 มีของขวัญให้บี๋นะ 🌸</p>
-    <div id="gift-wrap" onclick="openGift()">
+    <div id="gift-wrap">
       <div class="box-3d">
         <div class="bow"><div class="bow-left"></div><div class="bow-right"></div></div>
         <div class="box-lid"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
         <div class="box-body"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
       </div>
     </div>
-    <p class="click-hint" onclick="openGift()">👆 กดเปิดของขวัญ</p>
+    <p class="click-hint">👆 กดเปิดของขวัญ</p>
   </div>
 
   <div id="reveal">
@@ -309,22 +311,36 @@ function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
 }
 
-// OPEN GIFT
-function openGift(){
-  const w=document.getElementById('gift-wrap');
-  if(w.classList.contains('shake')) return;
+// ท่าไม้ตาย iOS: จับการกดที่ไหนก็ได้ในจอครั้งแรก เพื่อปลดล็อกเสียงก่อนเลย!
+document.getElementById('audio-unlocker').addEventListener('click', function(e) {
+  // ลบตัวแผ่นใสบังหน้าจอออก
+  this.remove();
   
-  // ให้เล่นเพลงทันทีในจังหวะที่นิ้วแตะจอ ห้ามหน่วงเวลา!
+  // ปลดล็อก YouTube ทันทีที่แตะจอ! ห้ามมีดีเลย์!
   try {
     if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
       ytPlayer.playVideo();
     }
-  } catch(e) { console.error(e); }
+  } catch(err) { console.log(err); }
 
+  // เรียกฟังก์ชันเปิดกล่องของขวัญตามปกติ
+  openGift(e.clientX, e.clientY);
+});
+
+// OPEN GIFT
+function openGift(clickX, clickY){
+  const w=document.getElementById('gift-wrap');
+  if(w.classList.contains('shake')) return;
+  
   w.classList.add('shake');
-  const r=w.getBoundingClientRect();
+  
+  // ใช้พิกัดที่กด ถ้าไม่มีให้ใช้พิกัดกลางจอ
+  const r = w.getBoundingClientRect();
+  const sparkX = clickX || (r.left + r.width/2);
+  const sparkY = clickY || (r.top + r.height/2);
+
   setTimeout(()=>{
-    spawnSparkles(r.left+r.width/2,r.top+r.height/2);
+    spawnSparkles(sparkX, sparkY);
     w.classList.add('gone');
     setTimeout(()=>{
       document.getElementById('gift-screen').style.display='none';
