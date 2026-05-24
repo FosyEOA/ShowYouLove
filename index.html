@@ -9,6 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Itim', cursive; min-height: 100vh; overflow-x: hidden; background: #1a0a00; }
 
+  /* พื้นหลัง Ghibli เต็มจอ ไม่มีรอยดำ */
   #bg { 
     position: fixed; 
     inset: 0; 
@@ -82,7 +83,7 @@
   .photo-frame:hover img { transform: scale(1.05); }
   .polaroid .caption { text-align:center; margin-top:8px; font-size:.85rem; color:#b07050; }
 
-  /* LIGHTBOX */
+  /* LIGHTBOX (แก้ไขตามคำขอ: 75% ไม่ยืด ไม่ขยายเกินจริง) */
   #lightbox {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0,0,0,0.85); z-index: 999;
@@ -91,7 +92,18 @@
   }
   #lightbox.active { display: flex; opacity: 1; }
   #lightbox img {
-    max-width: 90%; max-height: 85vh; border: 8px solid white;
+    /* กำหนดขนาดสูงสุดที่อนุญาต (75% ของจอ) */
+    max-width: 75vw;
+    max-height: 75vh;
+    
+    /* สั่งไม่ให้ขยายเกินความละเอียดจริงของรูป (ห้ามขยาด) */
+    width: auto;
+    height: auto;
+    
+    /* รักษาสัดส่วนภาพ (ห้ามยืด) */
+    object-fit: scale-down; 
+    
+    border: 8px solid white;
     border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.8);
     transform: scale(0.8); transition: transform 0.3s ease;
   }
@@ -112,7 +124,9 @@
   #music-section { width:100%; max-width:680px; margin:20px auto 0; padding:0 16px 60px; display:flex; flex-direction:column; align-items:center; gap:16px; opacity:0; transform:translateY(30px); transition:opacity .8s ease 1.4s,transform .8s ease 1.4s; }
   #music-section.visible { opacity:1; transform:translateY(0); }
   .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.8); }
-  #yt-wrapper { display: none; } 
+  
+  /* แก้ปัญหาเพลงไม่เล่น: ซ่อนเครื่องเล่นเพลงแบบไม่ใช้ display:none */
+  #yt-wrapper { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; } 
 
   /* LYRICS CONTAINER */
   #lyrics-container { 
@@ -257,133 +271,4 @@ const lyricsData = [
   {time:59.5,text:"That someday it would lead me back to you"},
   {time:67.0,text:"That may be all I need"},{time:74.0,text:"In darkness, she is all I see"},
   {time:79.5,text:"Come and rest your bones with me"},
-  {time:86.0,text:"Driving slow on Sunday morning"},{time:92.0,text:"And I never want to leave"},
-  {time:99.0,text:"Fingers trace your every outline"},{time:104.0,text:"Paint a picture with my hands"},
-  {time:110.0,text:"Back and forth we sway like branches in a storm"},
-  {time:116.0,text:"Change the weather, still together when it ends"},
-  {time:122.0,text:"That may be all I need"},{time:129.0,text:"In darkness, she is all I see"},
-  {time:134.5,text:"Come and rest your bones with me"},
-  {time:141.0,text:"Driving slow on Sunday morning"},{time:147.0,text:"And I never want to leave"},
-  {time:154.0,text:"🎷 (Solo) 🎷"},{time:160.0,text:"เฟิร์สรักบีมมากๆ นะครับ ❤️"},
-  {time:166.0,text:"อยู่ด้วยกันไปนานๆ ทุกๆ วันเลยนะ 🌻"},
-  {time:177.0,text:"But things just get so crazy"},{time:180.5,text:"Living life gets hard to do"},
-  {time:183.0,text:"Sunday morning, rain is falling and I'm calling out to you"},
-  {time:190.0,text:"Singing, someday it'll bring me back to you"},
-  {time:195.0,text:"Find a way to bring myself back home to you"},
-  {time:202.0,text:"And you may not know"},{time:207.0,text:"That may be all I need"},
-  {time:214.0,text:"In darkness, she is all I see"},{time:219.5,text:"Come and rest your bones with me"},
-  {time:226.0,text:"Driving slow on Sunday morning"},{time:233.0,text:"Driving slow..."},
-  {time:240.0,text:"เย้เย้ จบแล้ว จุ๊บๆ 😘"}
-];
-
-const li = document.getElementById('lyrics-inner');
-lyricsData.forEach((l,i) => {
-  const d = document.createElement('div');
-  d.className='lyric-line'; d.textContent=l.text; d.id='lyric-'+i;
-  li.appendChild(d);
-});
-
-let activeIdx=-1;
-function updateLyrics(t) {
-  let cur=-1;
-  for(let i=0;i<lyricsData.length;i++) if(t>=lyricsData[i].time) cur=i;
-  if(cur===activeIdx) return;
-  activeIdx=cur;
-  document.querySelectorAll('.lyric-line').forEach((el,i)=>{
-    el.classList.remove('active','past');
-    if(i===cur) el.classList.add('active');
-    else if(i<cur) el.classList.add('past');
-  });
-}
-
-// YOUTUBE
-let ytPlayer=null,lyricTimer=null;
-window.onYouTubeIframeAPIReady=function(){
-  ytPlayer=new YT.Player('yt-player',{
-    videoId:'to5Sg2KeEnU', 
-    playerVars:{rel:0,modestbranding:1,playsinline:1,autoplay:0},
-    events:{onStateChange:e=>{
-      if(e.data===YT.PlayerState.PLAYING){
-        clearInterval(lyricTimer);
-        lyricTimer=setInterval(()=>{
-          try {
-            if(ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
-              updateLyrics(ytPlayer.getCurrentTime());
-            }
-          } catch(err) { console.error(err); }
-        },300);
-      } else clearInterval(lyricTimer);
-    }}
-  });
-};
-const yt=document.createElement('script');
-yt.src='https://www.youtube.com/iframe_api';
-document.head.appendChild(yt);
-
-// SPARKLES
-function spawnSparkles(x,y){
-  const cols=['#ffd700','#ff8fab','#fff','#ffb347','#ff6b9d','#a8edea'];
-  for(let i=0;i<28;i++){
-    const s=document.createElement('div'); s.className='sparkle';
-    const a=Math.random()*360,d=60+Math.random()*140;
-    s.style.cssText=`left:${x}px;top:${y}px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${4+Math.random()*10}px;height:${4+Math.random()*10}px;--dx:${Math.cos(a*Math.PI/180)*d}px;--dy:${Math.sin(a*Math.PI/180)*d}px;animation-duration:${.6+Math.random()*.8}s;`;
-    document.body.appendChild(s);
-    s.addEventListener('animationend',()=>s.remove());
-  }
-}
-
-// HEARTS
-function spawnHeart(){
-  const h=document.createElement('div'); h.className='float-heart';
-  h.textContent=['💛','🌸','✨','💕','🌻','💖'][Math.floor(Math.random()*6)];
-  h.style.cssText=`left:${Math.random()*100}vw;bottom:-40px;animation-duration:${4+Math.random()*5}s;font-size:${1+Math.random()*1.2}rem;`;
-  document.body.appendChild(h);
-  h.addEventListener('animationend',()=>h.remove());
-}
-setInterval(spawnHeart,1800);
-
-// LIGHTBOX FUNCTIONS
-function openLightbox(imgSrc) {
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  lightboxImg.src = imgSrc;
-  lightbox.classList.add('active');
-}
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('active');
-}
-
-// OPEN GIFT
-function openGift(){
-  const w=document.getElementById('gift-wrap');
-  if(w.classList.contains('shake')) return;
-  
-  // ครอบ Try-Catch ป้องกัน Error บล็อกอนิเมชันเปิดกล่อง
-  try {
-    if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
-      ytPlayer.playVideo();
-    }
-  } catch(e) {
-    console.log("YouTube API is not fully ready, but gift will open anyway.");
-  }
-
-  w.classList.add('shake');
-  const r=w.getBoundingClientRect();
-  setTimeout(()=>{
-    spawnSparkles(r.left+r.width/2,r.top+r.height/2);
-    w.classList.add('gone');
-    setTimeout(()=>{
-      document.getElementById('gift-screen').style.display='none';
-      document.getElementById('reveal').classList.add('show');
-      setTimeout(()=>document.querySelectorAll('.polaroid').forEach(p=>p.classList.add('visible')),100);
-      setTimeout(()=>{
-        document.getElementById('msg-box').classList.add('visible');
-        document.getElementById('music-section').classList.add('visible');
-      },600);
-      for(let i=0;i<5;i++) setTimeout(()=>spawnSparkles(Math.random()*window.innerWidth,Math.random()*window.innerHeight*.6),i*200);
-    },700);
-  },500);
-}
-</script>
-</body>
-</html>
+  {time:86.0,text:"Driving slow on Sunday
