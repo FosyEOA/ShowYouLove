@@ -104,17 +104,6 @@
   #music-section.visible { opacity:1; transform:translateY(0); }
   .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.8); }
   
-  /* ท่าไม้ตาย iOS: เอาเครื่องเล่นมาซ่อนไว้ในจอ แต่ทำให้โปร่งใสสุดๆ */
-  #yt-wrapper { 
-    position: fixed; 
-    top: 50%; left: 50%; 
-    transform: translate(-50%, -50%);
-    width: 200px; height: 200px; 
-    opacity: 0.001; /* โปร่งใสจนมองไม่เห็น แต่ถือว่าอยู่ในจอ */
-    pointer-events: none; 
-    z-index: -999; 
-  } 
-
   #lyrics-container { width: 100%; height: 120px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   #lyrics-inner { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
   .lyric-line { 
@@ -137,6 +126,9 @@
 </style>
 </head>
 <body>
+
+<audio id="bg-music" src="https://audio.jukehost.co.uk/O31W0gO1Bf2R70f034568J0g7QZ0OQ00" preload="auto"></audio>
+
 <div id="bg"></div>
 
 <svg id="scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -150,18 +142,16 @@
 </svg>
 
 <div id="app">
-  <div id="audio-unlocker" style="position: absolute; inset: 0; z-index: 9999; cursor: pointer;"></div>
-
   <div id="gift-screen">
     <p class="title-top">🌸 มีของขวัญให้บี๋นะ 🌸</p>
-    <div id="gift-wrap">
+    <div id="gift-wrap" onclick="openGift()">
       <div class="box-3d">
         <div class="bow"><div class="bow-left"></div><div class="bow-right"></div></div>
         <div class="box-lid"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
         <div class="box-body"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
       </div>
     </div>
-    <p class="click-hint">👆 กดเปิดของขวัญ</p>
+    <p class="click-hint" onclick="openGift()">👆 กดเปิดของขวัญ</p>
   </div>
 
   <div id="reveal">
@@ -193,7 +183,6 @@
 
     <div id="music-section">
       <p class="music-label">🎵 Sunday Morning — Maroon 5 🎵</p>
-      <div id="yt-wrapper"><div id="yt-player"></div></div>
       <div id="lyrics-container"><div id="lyrics-inner"></div></div>
     </div>
   </div>
@@ -257,29 +246,11 @@ function updateLyrics(t) {
   });
 }
 
-// YOUTUBE
-let ytPlayer=null,lyricTimer=null;
-window.onYouTubeIframeAPIReady=function(){
-  ytPlayer=new YT.Player('yt-player',{
-    videoId:'to5Sg2KeEnU', 
-    playerVars:{rel:0,modestbranding:1,playsinline:1,autoplay:0},
-    events:{onStateChange:e=>{
-      if(e.data===YT.PlayerState.PLAYING){
-        clearInterval(lyricTimer);
-        lyricTimer=setInterval(()=>{
-          try {
-            if(ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
-              updateLyrics(ytPlayer.getCurrentTime());
-            }
-          } catch(err) {}
-        },300);
-      } else clearInterval(lyricTimer);
-    }}
-  });
-};
-const yt=document.createElement('script');
-yt.src='https://www.youtube.com/iframe_api';
-document.head.appendChild(yt);
+// ควบคุมการอัปเดตเนื้อเพลงด้วยเวลาของไฟล์ MP3 แท้ๆ
+const bgMusic = document.getElementById('bg-music');
+bgMusic.addEventListener('timeupdate', () => {
+  updateLyrics(bgMusic.currentTime);
+});
 
 function spawnSparkles(x,y){
   const cols=['#ffd700','#ff8fab','#fff','#ffb347','#ff6b9d','#a8edea'];
@@ -311,36 +282,18 @@ function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
 }
 
-// ท่าไม้ตาย iOS: จับการกดที่ไหนก็ได้ในจอครั้งแรก เพื่อปลดล็อกเสียงก่อนเลย!
-document.getElementById('audio-unlocker').addEventListener('click', function(e) {
-  // ลบตัวแผ่นใสบังหน้าจอออก
-  this.remove();
-  
-  // ปลดล็อก YouTube ทันทีที่แตะจอ! ห้ามมีดีเลย์!
-  try {
-    if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
-      ytPlayer.playVideo();
-    }
-  } catch(err) { console.log(err); }
-
-  // เรียกฟังก์ชันเปิดกล่องของขวัญตามปกติ
-  openGift(e.clientX, e.clientY);
-});
-
 // OPEN GIFT
-function openGift(clickX, clickY){
+function openGift(){
   const w=document.getElementById('gift-wrap');
   if(w.classList.contains('shake')) return;
   
-  w.classList.add('shake');
-  
-  // ใช้พิกัดที่กด ถ้าไม่มีให้ใช้พิกัดกลางจอ
-  const r = w.getBoundingClientRect();
-  const sparkX = clickX || (r.left + r.width/2);
-  const sparkY = clickY || (r.top + r.height/2);
+  // สั่งเล่นเสียง MP3 ทันทีที่นิ้วแตะ! (iOS จะยอมให้เล่นแน่นอนเพราะเป็นแท็ก <audio> แท้ๆ)
+  bgMusic.play().catch(e => console.log("Audio Play Error:", e));
 
+  w.classList.add('shake');
+  const r=w.getBoundingClientRect();
   setTimeout(()=>{
-    spawnSparkles(sparkX, sparkY);
+    spawnSparkles(r.left+r.width/2,r.top+r.height/2);
     w.classList.add('gone');
     setTimeout(()=>{
       document.getElementById('gift-screen').style.display='none';
