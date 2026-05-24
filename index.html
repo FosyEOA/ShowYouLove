@@ -7,684 +7,339 @@
 <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Itim', cursive; min-height: 100vh; overflow-x: hidden; background: #1a0a00; }
 
-  body {
-    font-family: 'Itim', cursive;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background: #1a0a00;
+  /* แก้ไขพื้นหลังให้เป็นรูปภาพแทน iframe */
+  #bg { 
+    position: fixed; 
+    inset: 0; 
+    z-index: 0;
+    background-image: url('https://i.postimg.cc/0j744BPw/84E3B9EB-D1F3-4039-A5B1-CCDAED22BE45.png'); 
+    background-size: cover;
+    background-position: center;
+  }
+  #bg::after { 
+    content: ''; 
+    position: absolute; 
+    inset: 0;
+    background: linear-gradient(160deg,rgba(60,30,10,.35) 0%,rgba(90,50,20,.25) 40%,rgba(30,15,5,.45) 100%); 
   }
 
-  /* ── BACKGROUND ── */
-  #bg {
-    position: fixed; inset: 0; z-index: 0;
-    background: url('https://images.unsplash.com/photo-1499678329028-101435549a4e?w=1600&q=80') center/cover no-repeat;
-    background-color: #3b2a1a;
-  }
-  #bg::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(160deg,
-      rgba(60,30,10,.55) 0%,
-      rgba(90,50,20,.45) 40%,
-      rgba(30,15,5,.65) 100%);
-  }
-
-  /* hand-drawn Ghibli-ish SVG scene */
   #scene { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  #app { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
-  /* ── MAIN SCROLL CONTAINER ── */
-  #app {
-    position: relative; z-index: 2;
-    min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-  }
-
-  /* ── GIFT SCREEN ── */
-  #gift-screen {
-    min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 24px;
-  }
-
-  .title-top {
-    font-size: clamp(1.4rem, 4vw, 2rem);
-    color: #ffe8b0;
-    text-shadow: 0 2px 12px rgba(255,160,50,.7);
-    animation: floatY 3s ease-in-out infinite;
-    text-align: center; padding: 0 1rem;
-  }
-
-  /* ── GIFT BOX ── */
+  /* GIFT */
+  #gift-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+  .title-top { font-size: clamp(1.4rem,4vw,2rem); color: #ffe8b0; text-shadow: 0 2px 12px rgba(255,160,50,.7); animation: floatY 3s ease-in-out infinite; text-align: center; padding: 0 1rem; }
   #gift-wrap { cursor: pointer; animation: pulse 1.8s ease-in-out infinite; user-select: none; }
   #gift-wrap:hover { animation: wobble .5s ease-in-out infinite; }
   #gift-wrap.shake { animation: shake .5s ease-in-out; }
   #gift-wrap.gone { opacity: 0; transform: scale(0) rotate(20deg); transition: all .6s cubic-bezier(.4,2,.6,1); pointer-events: none; }
+  .box-3d { width: 140px; height: 130px; position: relative; }
+  .box-body { width: 140px; height: 90px; background: linear-gradient(135deg,#ff8fab,#ff6b9d); border-radius: 8px; position: absolute; bottom: 0; box-shadow: inset -8px 0 0 rgba(0,0,0,.15), 0 10px 30px rgba(255,100,150,.5); overflow: hidden; }
+  .box-body::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:18px; height:100%; background:rgba(255,255,255,.3); }
+  .box-lid { width:148px; height:38px; background:linear-gradient(135deg,#ff6b9d,#e84393); border-radius:6px 6px 0 0; position:absolute; top:0; left:-4px; }
+  .box-lid::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:18px; height:100%; background:rgba(255,255,255,.25); }
+  .ribbon-v { position:absolute; left:50%; transform:translateX(-50%); top:0; bottom:0; width:18px; background:linear-gradient(90deg,#ffe0a0,#ffd060,#ffe0a0); z-index:2; border-radius:2px; }
+  .ribbon-h { position:absolute; top:0; left:0; right:0; height:18px; background:linear-gradient(180deg,#ffe0a0,#ffd060,#ffe0a0); z-index:2; border-radius:2px; }
+  .bow { position:absolute; top:-18px; left:50%; transform:translateX(-50%); width:60px; height:28px; z-index:3; }
+  .bow-left,.bow-right { position:absolute; top:0; width:26px; height:22px; background:linear-gradient(135deg,#ffd060,#ffb020); border-radius:50% 0 50% 0; }
+  .bow-left { left:0; transform:rotate(-35deg); }
+  .bow-right { right:0; transform:rotate(35deg); }
+  .bow::after { content:''; position:absolute; top:4px; left:50%; transform:translateX(-50%); width:12px; height:12px; background:#ffb020; border-radius:50%; }
+  .click-hint { font-size:1rem; color:#ffe8b0; text-shadow:0 1px 6px rgba(0,0,0,.5); animation:blink 1.6s ease-in-out infinite; }
+  .sparkle { position:fixed; pointer-events:none; z-index:99; border-radius:50%; animation:sparkleAnim 1s forwards; }
 
-  .box-3d {
-    width: 140px; height: 130px;
-    position: relative;
-    transform-style: preserve-3d;
-    perspective: 600px;
-  }
-  .box-body {
-    width: 140px; height: 90px;
-    background: linear-gradient(135deg, #ff8fab, #ff6b9d);
-    border-radius: 8px;
-    position: absolute; bottom: 0;
-    box-shadow:
-      inset -8px 0 0 rgba(0,0,0,.15),
-      0 10px 30px rgba(255,100,150,.5),
-      0 4px 8px rgba(0,0,0,.3);
-    overflow: hidden;
-  }
-  .box-body::before {
-    content: '';
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 18px; height: 100%;
-    background: rgba(255,255,255,.3);
-  }
-  .box-body::after {
-    content: '';
-    position: absolute; bottom: 0; left: 0; right: 0; height: 30%;
-    background: rgba(0,0,0,.08);
-  }
-  .box-lid {
-    width: 148px; height: 38px;
-    background: linear-gradient(135deg, #ff6b9d, #e84393);
-    border-radius: 6px 6px 0 0;
-    position: absolute; top: 0; left: -4px;
-    box-shadow: 0 -4px 12px rgba(255,100,150,.4);
-    transition: transform .4s ease;
-    transform-origin: bottom center;
-  }
-  .box-lid::before {
-    content: '';
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 18px; height: 100%;
-    background: rgba(255,255,255,.25);
-  }
-  /* ribbon vertical */
-  .ribbon-v {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    top: 0; bottom: 0; width: 18px;
-    background: linear-gradient(90deg, #ffe0a0, #ffd060, #ffe0a0);
-    z-index: 2; border-radius: 2px;
-  }
-  .ribbon-h {
-    position: absolute; top: 0; left: 0; right: 0; height: 18px;
-    background: linear-gradient(180deg, #ffe0a0, #ffd060, #ffe0a0);
-    z-index: 2; border-radius: 2px;
-  }
-  /* bow */
-  .bow {
-    position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-    width: 60px; height: 28px; z-index: 3;
-  }
-  .bow-left, .bow-right {
-    position: absolute; top: 0;
-    width: 26px; height: 22px;
-    background: linear-gradient(135deg, #ffd060, #ffb020);
-    border-radius: 50% 0 50% 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
-  }
-  .bow-left  { left: 0;  transform: rotate(-35deg); }
-  .bow-right { right: 0; transform: rotate(35deg); }
-  .bow::after {
-    content: '';
-    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
-    width: 12px; height: 12px;
-    background: #ffb020;
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0,0,0,.3);
-  }
+  /* REVEAL */
+  #reveal { display:none; width:100%; flex-direction:column; align-items:center; padding-bottom:40px; }
+  #reveal.show { display:flex; }
+  .reveal-title { font-size:clamp(1.6rem,5vw,2.4rem); color:#ffe8b0; text-shadow:0 2px 16px rgba(255,160,50,.8); margin:40px 0 20px; text-align:center; animation:floatY 3s ease-in-out infinite; }
 
-  .click-hint {
-    font-size: 1rem; color: #ffe8b0;
-    text-shadow: 0 1px 6px rgba(0,0,0,.5);
-    animation: blink 1.6s ease-in-out infinite;
-  }
+  /* POLAROIDS */
+  #polaroids { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:10px 20px; max-width:900px; }
+  .polaroid { background:#fff9f0; padding:12px 12px 36px; box-shadow:0 8px 32px rgba(0,0,0,.35); border-radius:3px; opacity:0; transition:opacity .7s ease, transform .7s cubic-bezier(.2,1.4,.4,1); cursor:pointer; flex:0 0 auto; }
+  .polaroid:nth-child(1) { transform:translateY(60px) rotate(-4deg) scale(.9); transition-delay:.1s; }
+  .polaroid:nth-child(2) { transform:translateY(60px) rotate(3deg)  scale(.9); transition-delay:.25s; }
+  .polaroid:nth-child(3) { transform:translateY(60px) rotate(-2deg) scale(.9); transition-delay:.4s; }
+  .polaroid:nth-child(4) { transform:translateY(60px) rotate(5deg)  scale(.9); transition-delay:.55s; }
+  .polaroid.visible:nth-child(1) { opacity:1; transform:rotate(-4deg) scale(1); }
+  .polaroid.visible:nth-child(2) { opacity:1; transform:rotate(3deg)  scale(1); }
+  .polaroid.visible:nth-child(3) { opacity:1; transform:rotate(-2deg) scale(1); }
+  .polaroid.visible:nth-child(4) { opacity:1; transform:rotate(5deg)  scale(1); }
+  .polaroid:hover { transform:scale(1.07) rotate(0deg) !important; z-index:10; box-shadow:0 16px 48px rgba(0,0,0,.45); }
 
-  /* ── SPARKLES ── */
-  .sparkle {
-    position: fixed; pointer-events: none; z-index: 99;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    animation: sparkleAnim 1s forwards;
-  }
-
-  /* ── REVEAL SECTION ── */
-  #reveal { display: none; width: 100%; flex-direction: column; align-items: center; padding-bottom: 40px; }
-  #reveal.show { display: flex; }
-
-  .reveal-title {
-    font-size: clamp(1.6rem, 5vw, 2.4rem);
-    color: #ffe8b0;
-    text-shadow: 0 2px 16px rgba(255,160,50,.8);
-    margin: 40px 0 20px;
-    text-align: center;
-    animation: floatY 3s ease-in-out infinite;
-  }
-
-  /* ── POLAROIDS ── */
-  #polaroids {
-    display: flex; flex-wrap: wrap; justify-content: center;
-    gap: 20px; padding: 10px 20px;
-    max-width: 900px;
-  }
-
-  .polaroid {
-    background: #fff9f0;
-    padding: 12px 12px 36px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.2);
-    border-radius: 3px;
-    opacity: 0; transform: translateY(60px) rotate(0deg) scale(.9);
-    transition: opacity .7s ease, transform .7s cubic-bezier(.2,1.4,.4,1);
-    cursor: pointer;
-    position: relative;
-    flex: 0 0 auto;
-  }
-  .polaroid:nth-child(1) { transform: translateY(60px) rotate(-4deg) scale(.9); transition-delay: .1s; }
-  .polaroid:nth-child(2) { transform: translateY(60px) rotate(3deg)  scale(.9); transition-delay: .25s; }
-  .polaroid:nth-child(3) { transform: translateY(60px) rotate(-2deg) scale(.9); transition-delay: .4s; }
-  .polaroid:nth-child(4) { transform: translateY(60px) rotate(5deg)  scale(.9); transition-delay: .55s; }
-
-  .polaroid.visible:nth-child(1) { opacity:1; transform: rotate(-4deg) scale(1); }
-  .polaroid.visible:nth-child(2) { opacity:1; transform: rotate(3deg)  scale(1); }
-  .polaroid.visible:nth-child(3) { opacity:1; transform: rotate(-2deg) scale(1); }
-  .polaroid.visible:nth-child(4) { opacity:1; transform: rotate(5deg)  scale(1); }
-
-  .polaroid:hover { transform: scale(1.07) rotate(0deg) !important; z-index: 10; box-shadow: 0 16px 48px rgba(0,0,0,.45); }
-
-  .polaroid img {
+  /* แก้ไขเฟรมรูปให้รองรับแท็ก img แทน iframe */
+  .photo-frame {
     width: 170px; height: 170px;
-    object-fit: cover; object-position: center top;
-    display: block;
-    border-radius: 1px;
-    background: #ddd;
-  }
-  .polaroid .caption {
-    text-align: center; margin-top: 8px;
-    font-size: .85rem; color: #b07050;
-    font-family: 'Itim', cursive;
-  }
-
-  /* ── MESSAGE BOX ── */
-  #msg-box {
-    max-width: 580px; width: 90%;
-    background: rgba(255,240,210,.18);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1.5px solid rgba(255,220,140,.4);
-    border-radius: 20px;
-    padding: 28px 32px;
-    margin: 30px auto 10px;
-    text-align: center;
-    opacity: 0; transform: translateY(30px);
-    transition: opacity .8s ease .9s, transform .8s ease .9s;
-    box-shadow: 0 8px 32px rgba(200,100,50,.15);
-  }
-  #msg-box.visible { opacity: 1; transform: translateY(0); }
-  #msg-box p {
-    font-size: clamp(1.05rem, 3vw, 1.3rem);
-    color: #ffe8c0;
-    line-height: 2;
-    text-shadow: 0 1px 6px rgba(0,0,0,.4);
-  }
-  .heart-deco { font-size: 1.8rem; margin-bottom: 8px; animation: heartBeat 1.2s ease-in-out infinite; }
-
-  /* ── MUSIC SECTION ── */
-  #music-section {
-    width: 100%; max-width: 680px;
-    margin: 20px auto 0;
-    padding: 0 16px 60px;
-    display: flex; flex-direction: column; align-items: center;
-    gap: 16px;
-    opacity: 0; transform: translateY(30px);
-    transition: opacity .8s ease 1.4s, transform .8s ease 1.4s;
-  }
-  #music-section.visible { opacity: 1; transform: translateY(0); }
-
-  .music-label {
-    font-size: 1.1rem; color: #ffe8b0;
-    text-shadow: 0 1px 8px rgba(0,0,0,.5);
-  }
-
-  #yt-wrapper {
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,.4);
-    width: 100%; max-width: 480px;
-    aspect-ratio: 16/9;
-    background: #000;
-  }
-  #yt-wrapper iframe { width: 100%; height: 100%; border: 0; display: block; }
-
-  /* ── LYRICS ── */
-  #lyrics-container {
-    width: 100%;
-    height: 240px;
-    overflow: hidden;
+    overflow: hidden; border-radius: 1px;
+    background: #e8d8c8;
     position: relative;
-    display: flex; align-items: center; justify-content: center;
   }
-  #lyrics-inner {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 6px;
-    transition: transform .5s cubic-bezier(.4,0,.2,1);
+  .photo-frame img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
   }
-  .lyric-line {
-    font-size: clamp(1rem, 3vw, 1.25rem);
-    color: #ffe8c0;
-    padding: 6px 16px;
-    border-radius: 30px;
-    text-align: center;
-    transition: all .4s ease;
-    filter: blur(2px);
-    opacity: .35;
-    transform: scale(.88);
-    white-space: pre-wrap;
-    text-shadow: 0 1px 4px rgba(0,0,0,.5);
-  }
-  .lyric-line.active {
-    filter: blur(0);
-    opacity: 1;
-    transform: scale(1.12);
-    color: #fff;
-    text-shadow: 0 0 18px rgba(255,200,100,.9), 0 2px 8px rgba(0,0,0,.6);
-    background: rgba(255,180,80,.15);
-  }
-  .lyric-line.past { filter: blur(1.5px); opacity: .22; transform: scale(.9); }
+  .polaroid .caption { text-align:center; margin-top:8px; font-size:.85rem; color:#b07050; }
 
-  /* ── FLOATING HEARTS ── */
-  .float-heart {
-    position: fixed; pointer-events: none; z-index: 1;
-    font-size: 1.4rem;
-    animation: floatHeart linear forwards;
-    opacity: .7;
-  }
+  /* MESSAGE */
+  #msg-box { max-width:580px; width:90%; background:rgba(255,240,210,.18); backdrop-filter:blur(14px); border:1.5px solid rgba(255,220,140,.4); border-radius:20px; padding:28px 32px; margin:30px auto 10px; text-align:center; opacity:0; transform:translateY(30px); transition:opacity .8s ease .9s,transform .8s ease .9s; }
+  #msg-box.visible { opacity:1; transform:translateY(0); }
+  #msg-box p { font-size:clamp(1.05rem,3vw,1.3rem); color:#ffe8c0; line-height:2; text-shadow:0 1px 6px rgba(0,0,0,.4); }
+  .heart-deco { font-size:1.8rem; margin-bottom:8px; animation:heartBeat 1.2s ease-in-out infinite; }
 
-  /* ── KEYFRAMES ── */
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
-  @keyframes wobble {
-    0%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}100%{transform:rotate(0)}
-  }
-  @keyframes shake {
-    0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-5deg)}
-    40%{transform:translateX(10px) rotate(5deg)}60%{transform:translateX(-8px)}
-    80%{transform:translateX(8px) rotate(-3deg)}
-  }
-  @keyframes floatY {
-    0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)}
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
-  @keyframes heartBeat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
-  @keyframes sparkleAnim {
-    0%  { transform: translate(0,0) scale(1); opacity: 1; }
-    100%{ transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-  }
-  @keyframes floatHeart {
-    0%  { transform: translateY(0) scale(1); opacity: .7; }
-    100%{ transform: translateY(-100vh) scale(.5); opacity: 0; }
-  }
-  @keyframes starTwinkle { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+  /* MUSIC */
+  #music-section { width:100%; max-width:680px; margin:20px auto 0; padding:0 16px 60px; display:flex; flex-direction:column; align-items:center; gap:16px; opacity:0; transform:translateY(30px); transition:opacity .8s ease 1.4s,transform .8s ease 1.4s; }
+  #music-section.visible { opacity:1; transform:translateY(0); }
+  .music-label { font-size:1.1rem; color:#ffe8b0; text-shadow:0 1px 8px rgba(0,0,0,.5); }
+  #yt-wrapper { border-radius:14px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,.4); width:100%; max-width:480px; aspect-ratio:16/9; background:#000; display: none; } /* ซ่อนตัวเครื่องเล่นวิดีโอไว้ */
+  #yt-wrapper iframe { width:100%; height:100%; border:0; display:block; }
+
+  /* LYRICS */
+  #lyrics-container { width:100%; height:240px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; }
+  #lyrics-inner { display:flex; flex-direction:column; align-items:center; gap:6px; transition:transform .5s cubic-bezier(.4,0,.2,1); }
+  .lyric-line { font-size:clamp(1rem,3vw,1.25rem); color:#ffe8c0; padding:6px 16px; border-radius:30px; text-align:center; transition:all .4s ease; filter:blur(2px); opacity:.35; transform:scale(.88); }
+  .lyric-line.active { filter:blur(0); opacity:1; transform:scale(1.12); color:#fff; text-shadow:0 0 18px rgba(255,200,100,.9); background:rgba(255,180,80,.15); }
+  .lyric-line.past { filter:blur(1.5px); opacity:.22; transform:scale(.9); }
+
+  .float-heart { position:fixed; pointer-events:none; z-index:1; animation:floatHeart linear forwards; opacity:.7; }
+
+  @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+  @keyframes wobble   { 0%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}100%{transform:rotate(0)} }
+  @keyframes shake    { 0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-5deg)}40%{transform:translateX(10px) rotate(5deg)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)} }
+  @keyframes floatY   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes heartBeat{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+  @keyframes sparkleAnim { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0} }
+  @keyframes floatHeart  { 0%{transform:translateY(0);opacity:.7} 100%{transform:translateY(-100vh);opacity:0} }
+  @keyframes starTwinkle { 0%,100%{opacity:.6} 50%{opacity:1} }
 </style>
 </head>
 <body>
-
-<!-- Background -->
 <div id="bg"></div>
 
-<!-- Ghibli SVG Scene -->
 <svg id="scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-  <!-- sky gradient -->
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a0d2e" stop-opacity=".7"/>
-      <stop offset="60%" stop-color="#3d1f0a" stop-opacity=".5"/>
-      <stop offset="100%" stop-color="#1a0a00" stop-opacity=".3"/>
+      <stop offset="0%" stop-color="#1a0d2e" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#1a0a00" stop-opacity=".2"/>
     </linearGradient>
     <radialGradient id="moon" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fff8dc"/>
-      <stop offset="100%" stop-color="#ffd060" stop-opacity=".6"/>
+      <stop offset="0%" stop-color="#fff8dc"/><stop offset="100%" stop-color="#ffd060" stop-opacity=".6"/>
     </radialGradient>
   </defs>
   <rect width="1440" height="900" fill="url(#sky)"/>
-  <!-- moon -->
   <circle cx="1100" cy="120" r="55" fill="url(#moon)" opacity=".85"/>
-  <circle cx="1100" cy="120" r="65" fill="none" stroke="#ffd060" stroke-width="2" opacity=".3"/>
-  <!-- stars -->
   <g fill="#fff">
     <circle cx="80"  cy="60"  r="1.5" style="animation:starTwinkle 2.1s ease-in-out infinite"/>
-    <circle cx="200" cy="30"  r="1"   style="animation:starTwinkle 3s ease-in-out infinite .4s"/>
     <circle cx="340" cy="80"  r="2"   style="animation:starTwinkle 2.4s ease-in-out infinite .2s"/>
-    <circle cx="520" cy="40"  r="1.5" style="animation:starTwinkle 1.8s ease-in-out infinite .7s"/>
     <circle cx="700" cy="20"  r="1"   style="animation:starTwinkle 2.7s ease-in-out infinite .1s"/>
     <circle cx="900" cy="55"  r="2"   style="animation:starTwinkle 3.2s ease-in-out infinite .5s"/>
     <circle cx="1250"cy="45"  r="1.5" style="animation:starTwinkle 2.0s ease-in-out infinite .3s"/>
-    <circle cx="1380"cy="90"  r="1"   style="animation:starTwinkle 2.5s ease-in-out infinite .8s"/>
-    <circle cx="150" cy="150" r="1"   style="animation:starTwinkle 1.9s ease-in-out infinite .6s"/>
-    <circle cx="450" cy="130" r="1.5" style="animation:starTwinkle 2.8s ease-in-out infinite"/>
   </g>
-  <!-- clouds -->
-  <g opacity=".5" fill="#fff5dc">
-    <ellipse cx="200" cy="200" rx="120" ry="40"/>
-    <ellipse cx="170" cy="190" rx="80"  ry="35"/>
-    <ellipse cx="250" cy="195" rx="90"  ry="32"/>
-    <ellipse cx="900" cy="160" rx="140" ry="45"/>
-    <ellipse cx="860" cy="150" rx="90"  ry="38"/>
-    <ellipse cx="960" cy="155" rx="100" ry="35"/>
-    <ellipse cx="500" cy="240" rx="100" ry="30"/>
-    <ellipse cx="460" cy="232" rx="70"  ry="26"/>
+  <g opacity=".35" fill="#fff5dc">
+    <ellipse cx="200" cy="200" rx="120" ry="40"/><ellipse cx="170" cy="190" rx="80" ry="35"/>
+    <ellipse cx="900" cy="160" rx="140" ry="45"/><ellipse cx="960" cy="155" rx="100" ry="35"/>
   </g>
-  <!-- Eiffel Tower silhouette (distant) -->
-  <g fill="#1a0a00" opacity=".6" transform="translate(680,400) scale(.45)">
-    <polygon points="0,0 -4,100 4,100" fill="#2a1200" opacity=".9"/>
-    <polygon points="0,0 -18,200 18,200" fill="#2a1200" opacity=".9"/>
-    <polygon points="0,0 -40,340 40,340" fill="#2a1200" opacity=".9"/>
-    <rect x="-45" y="330" width="90" height="12" fill="#2a1200" opacity=".9"/>
-    <rect x="-55" y="300" width="110" height="10" fill="#2a1200" opacity=".9"/>
-    <rect x="-38" y="230" width="76" height="8" fill="#2a1200" opacity=".9"/>
-    <!-- lattice lines -->
-    <line x1="-40" y1="340" x2="-18" y2="200" stroke="#3a1a00" stroke-width="3" opacity=".7"/>
-    <line x1="40"  y1="340" x2="18"  y2="200" stroke="#3a1a00" stroke-width="3" opacity=".7"/>
-    <line x1="-18" y1="200" x2="-4"  y2="100" stroke="#3a1a00" stroke-width="2" opacity=".7"/>
-    <line x1="18"  y1="200" x2="4"   y2="100" stroke="#3a1a00" stroke-width="2" opacity=".7"/>
+  <g fill="#2a1200" opacity=".55" transform="translate(680,420) scale(.45)">
+    <polygon points="0,0 -4,100 4,100"/>
+    <polygon points="0,0 -18,200 18,200"/>
+    <polygon points="0,0 -40,340 40,340"/>
+    <rect x="-45" y="330" width="90" height="12"/>
+    <rect x="-55" y="300" width="110" height="10"/>
+    <rect x="-38" y="230" width="76" height="8"/>
   </g>
-  <!-- rolling hills -->
-  <ellipse cx="720" cy="900" rx="900" ry="340" fill="#1a0d04" opacity=".8"/>
-  <ellipse cx="200" cy="900" rx="500" ry="280" fill="#200f05" opacity=".7"/>
-  <ellipse cx="1300"cy="900" rx="500" ry="260" fill="#200f05" opacity=".7"/>
-  <!-- flower field dots -->
+  <ellipse cx="720" cy="900" rx="900" ry="340" fill="#1a0d04" opacity=".6"/>
   <g opacity=".6">
-    <circle cx="120" cy="820" r="4" fill="#ff8fab"/>
-    <circle cx="180" cy="840" r="3" fill="#ffb347"/>
-    <circle cx="240" cy="810" r="5" fill="#ff6b9d"/>
-    <circle cx="300" cy="835" r="3" fill="#ffe08a"/>
-    <circle cx="360" cy="820" r="4" fill="#ff8fab"/>
-    <circle cx="420" cy="845" r="3" fill="#ff6b9d"/>
-    <circle cx="480" cy="815" r="5" fill="#ffb347"/>
-    <circle cx="540" cy="830" r="4" fill="#ffe08a"/>
-    <circle cx="600" cy="820" r="3" fill="#ff8fab"/>
-    <circle cx="660" cy="840" r="4" fill="#ffb347"/>
-    <circle cx="750" cy="830" r="3" fill="#ff6b9d"/>
-    <circle cx="820" cy="815" r="5" fill="#ffe08a"/>
-    <circle cx="900" cy="840" r="3" fill="#ff8fab"/>
-    <circle cx="970" cy="820" r="4" fill="#ffb347"/>
-    <circle cx="1050"cy="835" r="3" fill="#ff6b9d"/>
-    <circle cx="1130"cy="818" r="5" fill="#ffe08a"/>
-    <circle cx="1200"cy="840" r="3" fill="#ff8fab"/>
-    <circle cx="1280"cy="822" r="4" fill="#ffb347"/>
-    <circle cx="1360"cy="835" r="3" fill="#ff6b9d"/>
-  </g>
-  <!-- tree silhouettes -->
-  <g fill="#150800" opacity=".75">
-    <ellipse cx="80"  cy="780" rx="38" ry="60"/>
-    <rect    x="76"   y="820" width="8" height="50"/>
-    <ellipse cx="1360"cy="770" rx="42" ry="65"/>
-    <rect    x="1356" y="820" width="8" height="60"/>
-    <ellipse cx="1290"cy="800" rx="28" ry="50"/>
-    <rect    x="1287" y="840" width="6" height="40"/>
+    <circle cx="120" cy="820" r="4" fill="#ff8fab"/><circle cx="300" cy="830" r="4" fill="#ffe08a"/>
+    <circle cx="480" cy="815" r="5" fill="#ff6b9d"/><circle cx="660" cy="835" r="3" fill="#ffb347"/>
+    <circle cx="840" cy="820" r="4" fill="#ff8fab"/><circle cx="1020"cy="830" r="4" fill="#ffe08a"/>
+    <circle cx="1200"cy="818" r="5" fill="#ff6b9d"/><circle cx="1380"cy="835" r="3" fill="#ffb347"/>
   </g>
 </svg>
 
-<!-- App -->
 <div id="app">
-
-  <!-- GIFT SCREEN -->
   <div id="gift-screen">
     <p class="title-top">🌸 มีของขวัญให้บี๋นะ 🌸</p>
-
     <div id="gift-wrap" onclick="openGift()">
       <div class="box-3d">
-        <div class="bow">
-          <div class="bow-left"></div>
-          <div class="bow-right"></div>
-        </div>
-        <div class="box-lid">
-          <div class="ribbon-v"></div>
-          <div class="ribbon-h"></div>
-        </div>
-        <div class="box-body">
-          <div class="ribbon-v"></div>
-          <div class="ribbon-h"></div>
-        </div>
+        <div class="bow"><div class="bow-left"></div><div class="bow-right"></div></div>
+        <div class="box-lid"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
+        <div class="box-body"><div class="ribbon-v"></div><div class="ribbon-h"></div></div>
       </div>
     </div>
-
     <p class="click-hint">👆 กดเปิดของขวัญ</p>
   </div>
 
-  <!-- REVEAL SECTION -->
   <div id="reveal">
     <p class="reveal-title">💛 ช่วงเวลาของเรา 💛</p>
-
     <div id="polaroids">
       <div class="polaroid">
-        <img id="p1" src="https://i.postimg.cc/sBqWzmzx/DSC00023.jpg" alt="photo 1">
+        <div class="photo-frame">
+          <img src="https://i.postimg.cc/sBqWzmzx/DSC00023.jpg" alt="Photo 1">
+        </div>
         <div class="caption">🌸 ชอบมากๆ</div>
       </div>
       <div class="polaroid">
-        <img id="p2" src="https://i.postimg.cc/mz9Hg9ZV/IMG-4684.jpg" alt="photo 2">
+        <div class="photo-frame">
+          <img src="https://i.postimg.cc/mz9Hg9ZV/IMG-4684.jpg" alt="Photo 2">
+        </div>
         <div class="caption">✨ ความทรงจำ</div>
       </div>
       <div class="polaroid">
-        <img id="p3" src="https://i.postimg.cc/7Gz2ZzPm/IMG-4686.jpg" alt="photo 3">
+        <div class="photo-frame">
+          <img src="https://i.postimg.cc/7Gz2ZzPm/IMG-4686.jpg" alt="Photo 3">
+        </div>
         <div class="caption">🌻 ด้วยกันเสมอ</div>
       </div>
       <div class="polaroid">
-        <img id="p4" src="https://i.postimg.cc/FdSLHSFP/IMG-9691.jpg" alt="photo 4"
+        <div class="photo-frame">
+          <img src="https://i.postimg.cc/FdSLHSFP/IMG-9691.jpg" alt="Photo 4">
+        </div>
         <div class="caption">💛 รักบี๋มากๆ</div>
       </div>
     </div>
 
     <div id="msg-box">
       <div class="heart-deco">💛🌸💛</div>
-      <p>เย้เย้ เค้ารักบี๋มากๆเลย<br>
-         เค้าอยากอยู่กับบี๋นานๆ<br>
-         ไปเที่ยวด้วยกันเยอะๆ มีความสุขทุกๆวัน<br>
-         เค้าตั้งใจทำเพื่อบี๋เลยนะ<br>
-         เฟิร์สรักบีมนะครับ จุ๊บๆ 💋</p>
+      <p>เย้เย้ เค้ารักบี๋มากๆเลย<br>เค้าอยากอยู่กับบี๋นานๆ<br>ไปเที่ยวด้วยกันเยอะๆ มีความสุขทุกๆวัน<br>เค้าตั้งใจทำเพื่อบี๋เลยนะ<br>เฟิร์สรักบีมนะครับ จุ๊บๆ 💋</p>
     </div>
 
     <div id="music-section">
       <p class="music-label">🎵 Sunday Morning — Maroon 5 🎵</p>
-      <div id="yt-wrapper">
-        <div id="yt-player"></div>
-      </div>
-      <div id="lyrics-container">
-        <div id="lyrics-inner"></div>
-      </div>
+      <div id="yt-wrapper"><div id="yt-player"></div></div>
+      <div id="lyrics-container"><div id="lyrics-inner"></div></div>
     </div>
   </div>
-
 </div>
 
 <script>
-  /* ── LYRICS DATA ── */
-  const lyricsData = [
-    { time: 5.0,   text: "🎵" },
-    { time: 19.0,  text: "Sunday morning, rain is falling" },
-    { time: 23.5,  text: "Steal some covers, share some skin" },
-    { time: 30.0,  text: "Clouds are shrouding us in moments unforgettable" },
-    { time: 35.5,  text: "You twist to fit the mold that I am in" },
-    { time: 41.5,  text: "But things just get so crazy" },
-    { time: 44.5,  text: "Living life gets hard to do" },
-    { time: 48.0,  text: "And I would gladly hit the road" },
-    { time: 51.5,  text: "Get up and go if I knew" },
-    { time: 55.0,  text: "That someday it would lead me back to you" },
-    { time: 59.5,  text: "That someday it would lead me back to you" },
-    { time: 67.0,  text: "That may be all I need" },
-    { time: 74.0,  text: "In darkness, she is all I see" },
-    { time: 79.5,  text: "Come and rest your bones with me" },
-    { time: 86.0,  text: "Driving slow on Sunday morning" },
-    { time: 92.0,  text: "And I never want to leave" },
-    { time: 99.0,  text: "Fingers trace your every outline" },
-    { time: 104.0, text: "Paint a picture with my hands" },
-    { time: 110.0, text: "Back and forth we sway like branches in a storm" },
-    { time: 116.0, text: "Change the weather, still together when it ends" },
-    { time: 122.0, text: "That may be all I need" },
-    { time: 129.0, text: "In darkness, she is all I see" },
-    { time: 134.5, text: "Come and rest your bones with me" },
-    { time: 141.0, text: "Driving slow on Sunday morning" },
-    { time: 147.0, text: "And I never want to leave" },
-    { time: 154.0, text: "🎷 (Solo) 🎷" },
-    { time: 160.0, text: "เฟิร์สรักบีมมากๆ นะครับ ❤️" },
-    { time: 166.0, text: "อยู่ด้วยกันไปนานๆ ทุกๆ วันเลยนะ 🌻" },
-    { time: 177.0, text: "But things just get so crazy" },
-    { time: 180.5, text: "Living life gets hard to do" },
-    { time: 183.0, text: "Sunday morning, rain is falling and I'm calling out to you" },
-    { time: 190.0, text: "Singing, someday it'll bring me back to you" },
-    { time: 195.0, text: "Find a way to bring myself back home to you" },
-    { time: 202.0, text: "And you may not know" },
-    { time: 207.0, text: "That may be all I need" },
-    { time: 214.0, text: "In darkness, she is all I see" },
-    { time: 219.5, text: "Come and rest your bones with me" },
-    { time: 226.0, text: "Driving slow on Sunday morning" },
-    { time: 233.0, text: "Driving slow..." },
-    { time: 240.0, text: "เย้เย้ จบแล้ว จุ๊บๆ 😘" }
-  ];
+// LYRICS (แก้ไขเวลาบวก 5 วินาทีทุกท่อนเรียบร้อย)
+const lyricsData = [
+  {time:5.0,text:"🎵"},
+  {time:19.0,text:"Sunday morning, rain is falling"},
+  {time:23.5,text:"Steal some covers, share some skin"},
+  {time:30.0,text:"Clouds are shrouding us in moments unforgettable"},
+  {time:35.5,text:"You twist to fit the mold that I am in"},
+  {time:41.5,text:"But things just get so crazy"},{time:44.5,text:"Living life gets hard to do"},
+  {time:48.0,text:"And I would gladly hit the road"},{time:51.5,text:"Get up and go if I knew"},
+  {time:55.0,text:"That someday it would lead me back to you"},
+  {time:59.5,text:"That someday it would lead me back to you"},
+  {time:67.0,text:"That may be all I need"},{time:74.0,text:"In darkness, she is all I see"},
+  {time:79.5,text:"Come and rest your bones with me"},
+  {time:86.0,text:"Driving slow on Sunday morning"},{time:92.0,text:"And I never want to leave"},
+  {time:99.0,text:"Fingers trace your every outline"},{time:104.0,text:"Paint a picture with my hands"},
+  {time:110.0,text:"Back and forth we sway like branches in a storm"},
+  {time:116.0,text:"Change the weather, still together when it ends"},
+  {time:122.0,text:"That may be all I need"},{time:129.0,text:"In darkness, she is all I see"},
+  {time:134.5,text:"Come and rest your bones with me"},
+  {time:141.0,text:"Driving slow on Sunday morning"},{time:147.0,text:"And I never want to leave"},
+  {time:154.0,text:"🎷 (Solo) 🎷"},{time:160.0,text:"เฟิร์สรักบีมมากๆ นะครับ ❤️"},
+  {time:166.0,text:"อยู่ด้วยกันไปนานๆ ทุกๆ วันเลยนะ 🌻"},
+  {time:177.0,text:"But things just get so crazy"},{time:180.5,text:"Living life gets hard to do"},
+  {time:183.0,text:"Sunday morning, rain is falling and I'm calling out to you"},
+  {time:190.0,text:"Singing, someday it'll bring me back to you"},
+  {time:195.0,text:"Find a way to bring myself back home to you"},
+  {time:202.0,text:"And you may not know"},{time:207.0,text:"That may be all I need"},
+  {time:214.0,text:"In darkness, she is all I see"},{time:219.5,text:"Come and rest your bones with me"},
+  {time:226.0,text:"Driving slow on Sunday morning"},{time:233.0,text:"Driving slow..."},
+  {time:240.0,text:"เย้เย้ จบแล้ว จุ๊บๆ 😘"}
+];
 
-  /* ── BUILD LYRICS DOM ── */
-  const lyricsInner = document.getElementById('lyrics-inner');
-  lyricsData.forEach((l, i) => {
-    const div = document.createElement('div');
-    div.className = 'lyric-line';
-    div.textContent = l.text;
-    div.id = 'lyric-' + i;
-    lyricsInner.appendChild(div);
+const li = document.getElementById('lyrics-inner');
+lyricsData.forEach((l,i) => {
+  const d = document.createElement('div');
+  d.className='lyric-line'; d.textContent=l.text; d.id='lyric-'+i;
+  li.appendChild(d);
+});
+
+let activeIdx=-1;
+function updateLyrics(t) {
+  let cur=-1;
+  for(let i=0;i<lyricsData.length;i++) if(t>=lyricsData[i].time) cur=i;
+  if(cur===activeIdx) return;
+  activeIdx=cur;
+  document.querySelectorAll('.lyric-line').forEach((el,i)=>{
+    el.classList.remove('active','past');
+    if(i===cur) el.classList.add('active');
+    else if(i<cur) el.classList.add('past');
   });
-
-  let activeLyricIdx = -1;
-  function updateLyrics(t) {
-    let cur = -1;
-    for (let i = 0; i < lyricsData.length; i++) {
-      if (t >= lyricsData[i].time) cur = i;
-    }
-    if (cur === activeLyricIdx) return;
-    activeLyricIdx = cur;
-    const lines = document.querySelectorAll('.lyric-line');
-    lines.forEach((el, i) => {
-      el.classList.remove('active', 'past');
-      if (i === cur) el.classList.add('active');
-      else if (i < cur) el.classList.add('past');
-    });
-    if (cur >= 0) {
-      const activeEl = document.getElementById('lyric-' + cur);
-      if (activeEl) {
-        const container = document.getElementById('lyrics-container');
-        const cH = container.clientHeight;
-        const elTop = activeEl.offsetTop;
-        const elH  = activeEl.offsetHeight;
-        const scrollTarget = elTop - (cH / 2) + (elH / 2);
-        lyricsInner.style.transform = `translateY(${-scrollTarget + cH/2 - elH/2}px)`;
-      }
+  if(cur>=0){
+    const el=document.getElementById('lyric-'+cur);
+    if(el){
+      const cH=document.getElementById('lyrics-container').clientHeight;
+      li.style.transform=`translateY(${-(el.offsetTop-cH/2+el.offsetHeight/2)}px)`;
     }
   }
+}
 
-  /* ── YOUTUBE IFrame API ── */
-  let ytPlayer = null, lyricTimer = null;
-  window.onYouTubeIframeAPIReady = function() {
-    ytPlayer = new YT.Player('yt-player', {
-      videoId: 'to5Sg2KeEnU',
-      playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
-      events: {
-        onStateChange: (e) => {
-          if (e.data === YT.PlayerState.PLAYING) {
-            clearInterval(lyricTimer);
-            lyricTimer = setInterval(() => {
-              const t = ytPlayer.getCurrentTime();
-              updateLyrics(t);
-            }, 300);
-          } else {
-            clearInterval(lyricTimer);
-          }
-        }
-      }
-    });
-  };
-  // Load YT API
-  const ytScript = document.createElement('script');
-  ytScript.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(ytScript);
+// YOUTUBE (เปลี่ยนเป็นคลิป Audio/Lyrics เพื่อป้องกันโดนบล็อกการเล่นภายนอกเว็บ)
+let ytPlayer=null,lyricTimer=null;
+window.onYouTubeIframeAPIReady=function(){
+  ytPlayer=new YT.Player('yt-player',{
+    videoId:'to5Sg2KeEnU', // ใช้รหัสนี้ที่อนุญาตให้เล่นบนเว็บอื่นได้ปกติ
+    playerVars:{rel:0,modestbranding:1,playsinline:1,autoplay:0},
+    events:{onStateChange:e=>{
+      if(e.data===YT.PlayerState.PLAYING){
+        clearInterval(lyricTimer);
+        lyricTimer=setInterval(()=>updateLyrics(ytPlayer.getCurrentTime()),300);
+      } else clearInterval(lyricTimer);
+    }}
+  });
+};
+const yt=document.createElement('script');
+yt.src='https://www.youtube.com/iframe_api';
+document.head.appendChild(yt);
 
-  /* ── SPARKLES ── */
-  function spawnSparkles(x, y) {
-    const colors = ['#ffd700','#ff8fab','#fff','#ffb347','#ff6b9d','#a8edea'];
-    for (let i = 0; i < 28; i++) {
-      const s = document.createElement('div');
-      s.className = 'sparkle';
-      const angle = Math.random() * 360;
-      const dist  = 60 + Math.random() * 140;
-      const dx = Math.cos(angle * Math.PI/180) * dist + 'px';
-      const dy = Math.sin(angle * Math.PI/180) * dist + 'px';
-      s.style.cssText = `
-        left:${x}px; top:${y}px;
-        background:${colors[Math.floor(Math.random()*colors.length)]};
-        width:${4+Math.random()*10}px;
-        height:${4+Math.random()*10}px;
-        --dx:${dx}; --dy:${dy};
-        animation-duration:${.6+Math.random()*.8}s;
-        box-shadow:0 0 6px currentColor;
-      `;
-      document.body.appendChild(s);
-      s.addEventListener('animationend', () => s.remove());
-    }
+// SPARKLES
+function spawnSparkles(x,y){
+  const cols=['#ffd700','#ff8fab','#fff','#ffb347','#ff6b9d','#a8edea'];
+  for(let i=0;i<28;i++){
+    const s=document.createElement('div'); s.className='sparkle';
+    const a=Math.random()*360,d=60+Math.random()*140;
+    s.style.cssText=`left:${x}px;top:${y}px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${4+Math.random()*10}px;height:${4+Math.random()*10}px;--dx:${Math.cos(a*Math.PI/180)*d}px;--dy:${Math.sin(a*Math.PI/180)*d}px;animation-duration:${.6+Math.random()*.8}s;`;
+    document.body.appendChild(s);
+    s.addEventListener('animationend',()=>s.remove());
+  }
+}
+
+// HEARTS
+function spawnHeart(){
+  const h=document.createElement('div'); h.className='float-heart';
+  h.textContent=['💛','🌸','✨','💕','🌻','💖'][Math.floor(Math.random()*6)];
+  h.style.cssText=`left:${Math.random()*100}vw;bottom:-40px;animation-duration:${4+Math.random()*5}s;font-size:${1+Math.random()*1.2}rem;`;
+  document.body.appendChild(h);
+  h.addEventListener('animationend',()=>h.remove());
+}
+setInterval(spawnHeart,1800);
+
+// OPEN GIFT
+function openGift(){
+  const w=document.getElementById('gift-wrap');
+  if(w.classList.contains('shake')) return;
+  
+  // สั่งให้เพลงเริ่มเล่นทันทีตอนกดกล่อง (แก้ไขปัญหาเพลงไม่เล่นเพราะโดนเบราเซอร์บล็อก Autoplay)
+  if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
+    ytPlayer.playVideo();
   }
 
-  /* ── FLOATING HEARTS ── */
-  function spawnHeart() {
-    const h = document.createElement('div');
-    h.className = 'float-heart';
-    h.textContent = ['💛','🌸','✨','💕','🌻','💖'][Math.floor(Math.random()*6)];
-    h.style.cssText = `
-      left:${Math.random()*100}vw;
-      bottom: -40px;
-      animation-duration:${4+Math.random()*5}s;
-      font-size:${1+Math.random()*1.2}rem;
-    `;
-    document.body.appendChild(h);
-    h.addEventListener('animationend', () => h.remove());
-  }
-  setInterval(spawnHeart, 1800);
-
-  /* ── OPEN GIFT ── */
-  function openGift() {
-    const wrap = document.getElementById('gift-wrap');
-    if (wrap.classList.contains('shake')) return;
-
-    wrap.classList.add('shake');
-    const r = wrap.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-
-    setTimeout(() => {
-      spawnSparkles(cx, cy);
-      wrap.classList.add('gone');
-
-      setTimeout(() => {
-        document.getElementById('gift-screen').style.display = 'none';
-        const reveal = document.getElementById('reveal');
-        reveal.classList.add('show');
-
-        // animate polaroids
-        setTimeout(() => {
-          document.querySelectorAll('.polaroid').forEach(p => p.classList.add('visible'));
-        }, 100);
-
-        setTimeout(() => {
-          document.getElementById('msg-box').classList.add('visible');
-          document.getElementById('music-section').classList.add('visible');
-        }, 600);
-
-        // extra sparkles celebration
-        for (let i = 0; i < 5; i++) {
-          setTimeout(() => {
-            spawnSparkles(Math.random()*window.innerWidth, Math.random()*window.innerHeight*.6);
-          }, i * 200);
-        }
-      }, 700);
-    }, 500);
-  }
+  w.classList.add('shake');
+  const r=w.getBoundingClientRect();
+  setTimeout(()=>{
+    spawnSparkles(r.left+r.width/2,r.top+r.height/2);
+    w.classList.add('gone');
+    setTimeout(()=>{
+      document.getElementById('gift-screen').style.display='none';
+      document.getElementById('reveal').classList.add('show');
+      setTimeout(()=>document.querySelectorAll('.polaroid').forEach(p=>p.classList.add('visible')),100);
+      setTimeout(()=>{
+        document.getElementById('msg-box').classList.add('visible');
+        document.getElementById('music-section').classList.add('visible');
+      },600);
+      for(let i=0;i<5;i++) setTimeout(()=>spawnSparkles(Math.random()*innerWidth,Math.random()*innerHeight*.6),i*200);
+    },700);
+  },500);
+}
 </script>
 </body>
 </html>
